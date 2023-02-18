@@ -1,9 +1,9 @@
-use std::net::IpAddr;
-
 use anyhow::Context;
+use anyhow::Result;
 use assert_no_alloc::assert_no_alloc;
 use assert_no_alloc::*;
 use pnet::packet::icmp::IcmpPacket;
+use std::net::IpAddr;
 
 use crate::{
     four_tuple::FourTuple,
@@ -14,12 +14,11 @@ use crate::{
 };
 
 // configuration for no allocation assertion
-#[cfg(debug_assertions)]
 #[global_allocator]
 static A: AllocDisabler = AllocDisabler;
 
 #[test]
-fn test_four_tuple() -> anyhow::Result<()> {
+fn test_four_tuple() -> Result<()> {
     assert_no_alloc(|| {
         let pkt61 = &[
             0x78u8, 0x2b, 0x46, 0x4b, 0x3b, 0xab, 0xb4, 0x8c, 0x9d, 0x5d, 0x81, 0x8b, 0x08, 0x00,
@@ -44,7 +43,7 @@ fn test_four_tuple() -> anyhow::Result<()> {
 }
 
 #[test]
-fn test_gre() -> anyhow::Result<()> {
+fn test_gre() -> Result<()> {
     assert_no_alloc(|| {
         let pkt1 = &[
             0xc2, 0x01, 0x57, 0x75, 0x00, 0x00, 0xc2, 0x00, 0x57, 0x75, 0x00, 0x00, 0x08, 0x00,
