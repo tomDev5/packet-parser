@@ -3,10 +3,11 @@ use pnet::packet::{
     vlan::VlanPacket,
 };
 use smallvec::SmallVec;
+use thiserror::Error;
 
 use crate::l3::{self, L3Packet};
 
-#[derive(thiserror::Error, Debug)]
+#[derive(Error, Debug)]
 pub enum ParseError {
     #[error("Failed to parse Ethernet")]
     Ethernet,
