@@ -21,11 +21,7 @@ type VlanPackets<'a> = SmallVec<[VlanPacket<'a>; 2]>;
 
 #[derive(Debug)]
 pub enum L2Packet<'a> {
-    Ethernet {
-        header: EthernetPacket<'a>,
-        vlans: VlanPackets<'a>,
-        l3: L3Packet<'a>,
-    },
+    Ethernet(EthernetPacket<'a>, VlanPackets<'a>, L3Packet<'a>),
 }
 const ETHERNET_LENGTH: usize = 14;
 const VLAN_LENGTH: usize = 4;
@@ -47,38 +43,26 @@ impl<'a> TryFrom<&'a [u8]> for L2Packet<'a> {
         }
         let l3 = (ethertype, bytes).try_into()?;
 
-        Ok(Self::Ethernet { header, vlans, l3 })
+        Ok(Self::Ethernet(header, vlans, l3))
     }
 }
 
 impl<'a> L2Packet<'a> {
     pub fn get_l3(&self) -> Option<&L3Packet> {
         match self {
-            L2Packet::Ethernet {
-                header: _,
-                vlans: _,
-                l3,
-            } => Some(l3),
+            L2Packet::Ethernet(_, _, l3) => Some(l3),
         }
     }
 
     pub fn get_vlans(&self) -> &'a VlanPackets {
         match self {
-            L2Packet::Ethernet {
-                header: _,
-                vlans,
-                l3: _,
-            } => vlans,
+            L2Packet::Ethernet(_, vlans, _) => vlans,
         }
     }
 
     pub fn get_vlan_at(&self, index: usize) -> Option<&VlanPacket> {
         match self {
-            L2Packet::Ethernet {
-                header: _,
-                vlans: vlan,
-                l3: _,
-            } => vlan.get(index),
+            L2Packet::Ethernet(_, vlan, _) => vlan.get(index),
         }
     }
 }

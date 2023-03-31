@@ -71,15 +71,50 @@ fn test_gre() -> Result<()> {
         assert!(matches!(
             parsed,
             Packet::Tunneled(
-                L2Packet::Ethernet {
-                    header: _,
-                    vlans: _,
-                    l3: L3Packet::Ipv4(_, L4Packet::Gre(_))
-                },
+                L2Packet::Ethernet (
+                    _,
+                    _,
+                    L3Packet::Ipv4(_, L4Packet::Gre(_))
+                ),
                 AfterTunnelStart::L3(L3Packet::Ipv4(_, L4Packet::Icmp(header)))
             ) if header == expected_icmp
         ));
 
         Ok(())
+    })
+}
+
+#[test]
+fn test_with_payload() {
+    assert_no_alloc(|| {
+        let pkt8 = &[
+            0x00, 0x00, 0x01, 0x06, 0x00, 0x00, 0x92, 0x75, /* .......u */
+            0xfe, 0xd1, 0x8e, 0x3b, 0x08, 0x00, 0x45, 0x00, /* ...;..E. */
+            0x00, 0x4b, 0xd7, 0xb2, 0x40, 0x00, 0x40, 0x06, /* .K..@.@. */
+            0x4c, 0xf6, 0x0a, 0x01, 0x01, 0x02, 0x0a, 0x01, /* L....... */
+            0x01, 0x01, 0x84, 0xff, 0x00, 0xb3, 0x3c, 0x2f, /* ......</ */
+            0xde, 0x76, 0xc9, 0xde, 0xc5, 0xab, 0x80, 0x18, /* .v...... */
+            0x00, 0x3a, 0x09, 0x86, 0x00, 0x00, 0x01, 0x01, /* .:...... */
+            0x08, 0x0a, 0x07, 0x72, 0x0b, 0x7b, 0x07, 0x72, /* ...r.{.r */
+            0x0a, 0x81, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* ........ */
+            0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* ........ */
+            0xff, 0xff, 0x00, 0x17, 0x02, 0x00, 0x00, 0x00, /* ........ */
+            0x00,
+        ];
+
+        let parsed = Packet::try_from(pkt8.as_slice()).expect("Packet parse failed");
+        if let Packet::Regular(L2Packet::Ethernet(_, _, l3)) = &parsed {
+            libc_println!("SDafsdf");
+            libc_println!("{l3:#?}");
+        }
+
+        assert!(matches!(
+            parsed,
+            Packet::Regular(L2Packet::Ethernet(
+                _,
+                _,
+                L3Packet::Ipv4(_, L4Packet::Tcp(_))
+            ))
+        ));
     })
 }
