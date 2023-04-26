@@ -103,10 +103,6 @@ fn test_with_payload() {
         ];
 
         let parsed = Packet::try_from(pkt8.as_slice()).expect("Packet parse failed");
-        if let Packet::Regular(L2Packet::Ethernet(_, _, l3)) = &parsed {
-            libc_println!("SDafsdf");
-            libc_println!("{l3:#?}");
-        }
 
         assert!(matches!(
             parsed,
