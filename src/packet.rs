@@ -24,14 +24,9 @@ pub enum ParseError {
 }
 
 #[derive(Debug)]
-pub enum AfterTunnelStart<'a> {
-    L3(L3Packet<'a>),
-}
-
-#[derive(Debug)]
 pub enum Packet<'a> {
     Regular(L2Packet<'a>),
-    Tunneled(L2Packet<'a>, AfterTunnelStart<'a>),
+    L3Tunnel(L2Packet<'a>, L3Packet<'a>),
 }
 
 impl<'a> TryFrom<&'a [u8]> for Packet<'a> {
@@ -50,14 +45,14 @@ impl<'a> TryFrom<&'a [u8]> for Packet<'a> {
         let outer_length = bytes.len() - gre.payload().len();
 
         let after_tunnel = match EtherType(gre.get_protocol_type()) {
-            ethertype @ (EtherTypes::Ipv4 | EtherTypes::Ipv6) => Some(AfterTunnelStart::L3(
-                (ethertype, &bytes[outer_length..]).try_into()?,
-            )),
+            ethertype @ (EtherTypes::Ipv4 | EtherTypes::Ipv6) => {
+                Some((ethertype, &bytes[outer_length..]).try_into()?)
+            }
             _ => return Err(ParseError::InvalidProtocolAfterTunnel),
         };
 
         Ok(match after_tunnel {
-            Some(after_tunnel) => Packet::Tunneled(l2, after_tunnel),
+            Some(after_tunnel) => Packet::L3Tunnel(l2, after_tunnel),
             None => Packet::Regular(l2),
         })
     }
@@ -67,7 +62,7 @@ impl<'a> Packet<'a> {
     pub fn get_inner_four_tuple(&self) -> Option<FourTuple> {
         let l3 = match self {
             Packet::Regular(inner) => inner.get_l3()?,
-            Packet::Tunneled(_, inner) => inner.get_l3()?,
+            Packet::L3Tunnel(_, l3) => l3,
         };
 
         let l4 = l3.get_l4()?;
@@ -83,15 +78,7 @@ impl<'a> Packet<'a> {
     pub fn get_inner_l3(&self) -> Option<&L3Packet> {
         match self {
             Packet::Regular(inner) => inner.get_l3(),
-            Packet::Tunneled(_, inner) => inner.get_l3(),
-        }
-    }
-}
-
-impl<'a> AfterTunnelStart<'a> {
-    pub fn get_l3(&self) -> Option<&L3Packet> {
-        match self {
-            AfterTunnelStart::L3(l3) => Some(l3),
+            Packet::L3Tunnel(_, l3) => Some(l3),
         }
     }
 }

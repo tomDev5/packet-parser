@@ -3,13 +3,7 @@ use anyhow::Result;
 use pnet::packet::icmp::IcmpPacket;
 use std::net::IpAddr;
 
-use crate::{
-    four_tuple::FourTuple,
-    l2::L2Packet,
-    l3::L3Packet,
-    l4::L4Packet,
-    packet::{AfterTunnelStart, Packet},
-};
+use crate::{four_tuple::FourTuple, l2::L2Packet, l3::L3Packet, l4::L4Packet, packet::Packet};
 
 // enable assert_no_alloc when not on release
 #[cfg(debug_assertions)]
@@ -70,13 +64,13 @@ fn test_gre() -> Result<()> {
 
         assert!(matches!(
             parsed,
-            Packet::Tunneled(
+            Packet::L3Tunnel(
                 L2Packet::Ethernet (
                     _,
                     _,
                     L3Packet::Ipv4(_, L4Packet::Gre(_))
                 ),
-                AfterTunnelStart::L3(L3Packet::Ipv4(_, L4Packet::Icmp(header)))
+                L3Packet::Ipv4(_, L4Packet::Icmp(header))
             ) if header == expected_icmp
         ));
 
