@@ -3,20 +3,15 @@ use anyhow::Result;
 use pnet::packet::icmp::IcmpPacket;
 use std::net::IpAddr;
 
-use crate::{four_tuple::FourTuple, l2::L2Packet, l3::L3Packet, l4::L4Packet, packet::Packet};
+use packet_parser::{
+    four_tuple::FourTuple, l2::L2Packet, l3::L3Packet, l4::L4Packet, packet::Packet,
+};
 
-// enable assert_no_alloc when not on release
 #[cfg(debug_assertions)]
 use assert_no_alloc::{assert_no_alloc, AllocDisabler};
 #[cfg(debug_assertions)]
 #[global_allocator]
 static A: AllocDisabler = AllocDisabler;
-// bench mode wierdly compiles all tests
-// so we need to make them compile
-#[cfg(not(debug_assertions))]
-pub fn assert_no_alloc<T, F: FnOnce() -> T>(func: F) -> T {
-    func()
-}
 
 #[test]
 fn test_four_tuple() -> Result<()> {
