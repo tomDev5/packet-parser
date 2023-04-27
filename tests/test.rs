@@ -4,7 +4,10 @@ use pnet::packet::icmp::IcmpPacket;
 use std::net::IpAddr;
 
 use packet_parser::{
-    four_tuple::FourTuple, l2::L2Packet, l3::L3Packet, l4::L4Packet, packet::Packet,
+    l2::L2Packet,
+    l3::L3Packet,
+    l4::L4Packet,
+    packet::{FourTuple, Packet},
 };
 
 #[cfg(debug_assertions)]
@@ -24,6 +27,7 @@ fn test_four_tuple() -> Result<()> {
             0x08, 0x00, 0x07, 0x9e, 0x08, 0x00, 0x00, 0x00,
         ];
         let parsed = Packet::try_from(pkt61.as_slice())?;
+        println!("{parsed:#?}");
         let four_tuple = parsed
             .get_inner_four_tuple()
             .context("Parsing four tuple failed")?;

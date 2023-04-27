@@ -1,7 +1,8 @@
+use std::net::IpAddr;
+
 use pnet::packet::ethernet::{EtherType, EtherTypes};
 
 use crate::{
-    four_tuple::FourTuple,
     l2::{self, L2Packet},
     l3::{self, L3Packet},
     l4::L4Packet,
@@ -81,4 +82,12 @@ impl<'a> Packet<'a> {
             Packet::L3Tunnel(_, l3) => Some(l3),
         }
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FourTuple {
+    pub source_ip: IpAddr,
+    pub source_port: u16,
+    pub destination_ip: IpAddr,
+    pub destination_port: u16,
 }

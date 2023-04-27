@@ -1,5 +1,48 @@
-pub mod four_tuple;
+//! Fast, Zero-Copy, Epic packet parser
+//!
+//! # Introduction
+//! This library is using [`pnet`] for the packet parsing.<br>
+//! Currently supporting the following protocols:
+//! - `Ethernet`
+//! - `IPv4`, `IPv6`, `Arp`
+//! - `TCP`, `UDP`, `ICMP`, `ICMPv6`
+//! - `GRE tunnel`
+//!
+//! # Usage
+//! Simple parsing of a packet from bytes:
+//! ```rust
+//! use packet_parser::packet::Packet;
+//! let packet = &[
+//!     0x78u8, 0x2b, 0x46, 0x4b, 0x3b, 0xab, 0xb4, 0x8c, 0x9d, 0x5d, 0x81, 0x8b, 0x08, 0x00,
+//!     0x45, 0x00, 0x00, 0x32, 0x36, 0x2b, 0x40, 0x00, 0x80, 0x06, 0x08, 0x94, 0xc0, 0xa8,
+//!     0x1d, 0x11, 0xc0, 0xa8, 0x1d, 0xa5, 0xec, 0x62, 0x63, 0xdd, 0xc6, 0xef, 0xa3, 0xdf,
+//!     0x88, 0xce, 0x7e, 0xbc, 0x50, 0x18, 0x02, 0x01, 0x0e, 0x83, 0x00, 0x00, 0x08, 0xff,
+//!     0x08, 0x00, 0x07, 0x9e, 0x08, 0x00, 0x00, 0x00,
+//! ];
+//! let parsed = Packet::try_from(packet.as_slice()).unwrap();
+//! println!("{parsed:#?}");
+//! ```
+//! output:
+//! ```text
+//! Regular(
+//!     Ethernet(
+//!         EthernetPacket { destination : 78:2b:46:4b:3b:ab, source : b4:8c:9d:5d:81:8b, ethertype : EtherType(2048),  },
+//!         [],
+//!         Ipv4(
+//!             Ipv4Packet { version : 4, header_length : 5, dscp : 0, ecn : 0, total_length : 50, identification : 13867, flags : 2, fragment_offset : 0, ttl : 128, next_level_protocol : IpNextHeaderProtocol(6), checksum : 2196, source : 192.168.29.17, destination : 192.168.29.165, options : [],  },
+//!             Tcp(
+//!                 TcpPacket { source : 60514, destination : 25565, sequence : 3337593823, acknowledgement : 2295234236, data_offset : 5, reserved : 0, flags : 24, window : 513, checksum : 3715, urgent_ptr : 0, options : [],  },
+//!             ),
+//!         ),
+//!     ),
+//!     )
+//! ```
+
+/// Encompases layer 2 protocols
 pub mod l2;
+/// Encompases layer 3 protocols
 pub mod l3;
+/// Encompases layer 4 protocols
 pub mod l4;
+/// Encompases general packet structures (four tuple, encapsulations, etc)
 pub mod packet;
