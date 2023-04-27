@@ -23,15 +23,21 @@ type VlanPackets<'a> = SmallVec<[VlanPacket<'a>; 2]>;
 pub enum L2Packet<'a> {
     Ethernet(EthernetPacket<'a>, VlanPackets<'a>, L3Packet<'a>),
 }
-const ETHERNET_LENGTH: usize = 14;
-const VLAN_LENGTH: usize = 4;
 
 impl<'a> TryFrom<&'a [u8]> for L2Packet<'a> {
     type Error = ParseError;
 
     fn try_from(mut bytes: &'a [u8]) -> Result<Self, Self::Error> {
+        // this code is complex due to supporting any amount of vlans
+        // (will not allocate memory unless more than 2 vlans)
+        // may be vunrable, because technically it could receive a lot
+        // of fucked up packets (100 vlans) and slow down
+        // todo: consider adding a limit and maybe offer another function without one
+        const ETHERNET_LENGTH_WITHOUT_PROTOCOL: usize = 14;
+        const VLAN_LENGTH: usize = 4;
+
         let header = EthernetPacket::new(bytes).ok_or(ParseError::Ethernet)?;
-        bytes = &bytes[ETHERNET_LENGTH..];
+        bytes = &bytes[ETHERNET_LENGTH_WITHOUT_PROTOCOL..];
 
         let mut vlans = VlanPackets::new();
         let mut ethertype = header.get_ethertype();
