@@ -61,11 +61,7 @@ impl<'a> TryFrom<&'a [u8]> for Packet<'a> {
 
 impl<'a> Packet<'a> {
     pub fn get_inner_four_tuple(&self) -> Option<FourTuple> {
-        let l3 = match self {
-            Packet::Regular(inner) => inner.get_l3()?,
-            Packet::L3Tunnel(_, l3) => l3,
-        };
-
+        let l3 = self.get_inner_l3()?;
         let l4 = l3.get_l4()?;
 
         Some(FourTuple {
@@ -78,7 +74,7 @@ impl<'a> Packet<'a> {
 
     pub fn get_inner_l3(&self) -> Option<&L3Packet> {
         match self {
-            Packet::Regular(inner) => inner.get_l3(),
+            Packet::Regular(l2) => l2.get_l3(),
             Packet::L3Tunnel(_, l3) => Some(l3),
         }
     }
