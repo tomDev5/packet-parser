@@ -1,4 +1,4 @@
-use std::net::IpAddr;
+use std::{fmt::Display, net::IpAddr};
 
 use pnet::packet::ethernet::{EtherType, EtherTypes};
 
@@ -24,7 +24,7 @@ pub enum ParseError {
     MissingL4,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Packet<'a> {
     Regular(L2Packet<'a>),
     L3Tunnel(L2Packet<'a>, L3Packet<'a>),
@@ -84,10 +84,20 @@ impl<'a> Packet<'a> {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct FourTuple {
     pub source_ip: IpAddr,
     pub source_port: u16,
     pub destination_ip: IpAddr,
     pub destination_port: u16,
+}
+
+impl Display for FourTuple {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}:{} -> {}:{}",
+            self.source_ip, self.source_port, self.destination_ip, self.destination_port
+        )
+    }
 }

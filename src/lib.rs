@@ -39,18 +39,7 @@
 //!     ),
 //! )
 //! ```
-//!
-//! # Reading and writing packets with zero copy
-//! ```no_run, rust
-//! use packet_parser::{interface::get_zc_interface, packet::Packet};
-//!
-//! let mut capture = get_zc_interface("eno0").unwrap();
-//! let packet = capture.next_packet().unwrap();
-//! let packet = Packet::try_from(packet.data).unwrap();
-//! ```
 
-/// Exposes function that returns a zero-copy interface for reading packets
-pub mod interface;
 /// Encompases layer 2 protocols
 pub mod l2;
 /// Encompases layer 3 protocols

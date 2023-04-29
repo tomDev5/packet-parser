@@ -19,7 +19,7 @@ pub enum ParseError {
 
 type VlanPackets<'a> = SmallVec<[VlanPacket<'a>; 2]>;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum L2Packet<'a> {
     Ethernet(EthernetPacket<'a>, VlanPackets<'a>, L3Packet<'a>),
 }

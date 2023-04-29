@@ -23,7 +23,7 @@ pub enum ParseError {
     UnknownProtocol,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum L4Packet<'a> {
     Tcp(TcpPacket<'a>),
     Udp(UdpPacket<'a>),
