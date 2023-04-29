@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use pnet::packet::{
     gre::GrePacket,
     icmp::IcmpPacket,
@@ -64,6 +66,18 @@ impl<'a> L4Packet<'a> {
             L4Packet::Tcp(header) => Some(header.get_destination()),
             L4Packet::Udp(header) => Some(header.get_destination()),
             _ => None,
+        }
+    }
+}
+
+impl Display for L4Packet<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            L4Packet::Tcp(_) => write!(f, "Tcp"),
+            L4Packet::Udp(_) => write!(f, "Udp"),
+            L4Packet::Gre(_) => write!(f, "Gre"),
+            L4Packet::Icmp(_) => write!(f, "Icmp"),
+            L4Packet::Icmpv6(_) => write!(f, "Icmpv6"),
         }
     }
 }

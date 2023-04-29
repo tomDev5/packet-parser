@@ -5,7 +5,7 @@ use packet_parser::{
     l2::L2Packet,
     l3::L3Packet,
     l4::L4Packet,
-    packet::{FourTuple, Packet},
+    packet::{FourTuple, HeaderPosition, Packet},
 };
 
 #[test]
@@ -21,7 +21,7 @@ fn test_four_tuple() {
         let parsed = Packet::try_from(pkt61.as_slice()).expect("packet parse failed");
 
         let four_tuple = parsed
-            .get_inner_four_tuple()
+            .get_four_tuple(HeaderPosition::Innermost)
             .expect("parsing four tuple failed");
         let expected = FourTuple {
             source_ip: IpAddr::from([192, 168, 29, 17]),

@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use pnet::packet::{
     ethernet::{EtherTypes, EthernetPacket},
     vlan::VlanPacket,
@@ -54,7 +56,7 @@ impl<'a> TryFrom<&'a [u8]> for L2Packet<'a> {
 }
 
 impl<'a> L2Packet<'a> {
-    pub fn get_l3(&self) -> Option<&L3Packet> {
+    pub fn get_l3(&self) -> Option<&L3Packet<'a>> {
         match self {
             L2Packet::Ethernet(_, _, l3) => Some(l3),
         }
@@ -69,6 +71,16 @@ impl<'a> L2Packet<'a> {
     pub fn get_vlan_at(&self, index: usize) -> Option<&VlanPacket> {
         match self {
             L2Packet::Ethernet(_, vlan, _) => vlan.get(index),
+        }
+    }
+}
+
+impl<'a> Display for L2Packet<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            L2Packet::Ethernet(_, vlans, l3) => {
+                write!(f, "Ethernet, {} Vlans, {}", vlans.len(), l3)
+            }
         }
     }
 }

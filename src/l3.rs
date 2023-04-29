@@ -1,4 +1,4 @@
-use std::net::IpAddr;
+use std::{fmt::Display, net::IpAddr};
 
 use pnet::packet::{
     arp::ArpPacket,
@@ -77,11 +77,21 @@ impl<'a> L3Packet<'a> {
         }
     }
 
-    pub fn get_l4(&self) -> Option<&L4Packet> {
+    pub fn get_l4(&self) -> Option<&L4Packet<'a>> {
         match self {
             L3Packet::Ipv4(_, l4) => Some(l4),
             L3Packet::Ipv6(_, l4) => Some(l4),
             _ => None,
+        }
+    }
+}
+
+impl Display for L3Packet<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            L3Packet::Ipv4(_, l4) => write!(f, "IPv4, {}", l4),
+            L3Packet::Ipv6(_, l4) => write!(f, "IPv6, {}", l4),
+            L3Packet::Arp(_) => write!(f, "Arp"),
         }
     }
 }

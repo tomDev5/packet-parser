@@ -1,6 +1,6 @@
 use std::{fmt::Display, net::IpAddr};
 
-use pnet::packet::ethernet::{EtherType, EtherTypes};
+use pnet::packet::ethernet::EtherType;
 
 use crate::{
     l2::{self, L2Packet},
@@ -41,28 +41,30 @@ impl<'a> TryFrom<&'a [u8]> for Packet<'a> {
             .get_l4()
             .ok_or(ParseError::MissingL4)?;
 
-        let L4Packet::Gre(gre) = l4 else {return Ok(Packet::Regular(l2)) };
+        Ok(match l4 {
+            L4Packet::Gre(gre) => {
+                let outer_length = bytes.len() - gre.payload().len();
+                let inner_buffer = &bytes[outer_length..];
+                let after_tunnel = (EtherType(gre.get_protocol_type()), inner_buffer).try_into()?;
 
-        let outer_length = bytes.len() - gre.payload().len();
-
-        let after_tunnel = match EtherType(gre.get_protocol_type()) {
-            ethertype @ (EtherTypes::Ipv4 | EtherTypes::Ipv6) => {
-                Some((ethertype, &bytes[outer_length..]).try_into()?)
+                Packet::L3Tunnel(l2, after_tunnel)
             }
-            _ => return Err(ParseError::InvalidProtocolAfterTunnel),
-        };
-
-        Ok(match after_tunnel {
-            Some(after_tunnel) => Packet::L3Tunnel(l2, after_tunnel),
-            None => Packet::Regular(l2),
+            _ => Packet::Regular(l2),
         })
     }
 }
 
+#[derive(PartialEq, Eq, Clone, Copy)]
+pub enum HeaderPosition {
+    Inner,
+    Outer,
+    Innermost,
+}
+
 impl<'a> Packet<'a> {
-    pub fn get_inner_four_tuple(&self) -> Option<FourTuple> {
-        let l3 = self.get_inner_l3()?;
-        let l4 = l3.get_l4()?;
+    pub fn get_four_tuple(&self, position: HeaderPosition) -> Option<FourTuple> {
+        let l3 = self.get_l3(position)?;
+        let l4 = self.get_l4(position)?;
 
         Some(FourTuple {
             source_ip: l3.get_source()?,
@@ -72,10 +74,40 @@ impl<'a> Packet<'a> {
         })
     }
 
-    pub fn get_inner_l3(&self) -> Option<&L3Packet> {
+    pub fn get_l2(&self, position: HeaderPosition) -> Option<&L2Packet<'a>> {
+        match (position, self) {
+            (HeaderPosition::Inner, _) => None, // no l2 encaps are supported atm
+            (HeaderPosition::Outer, Packet::Regular(l2)) => l2.into(),
+            (HeaderPosition::Outer, Packet::L3Tunnel(l2, _)) => l2.into(),
+            (HeaderPosition::Innermost, Packet::Regular(l2)) => l2.into(),
+            (HeaderPosition::Innermost, Packet::L3Tunnel(l2, _)) => l2.into(),
+        }
+    }
+
+    pub fn get_l3(&self, position: HeaderPosition) -> Option<&L3Packet<'a>> {
+        match (position, self) {
+            (HeaderPosition::Inner, Packet::Regular(_)) => None,
+            (HeaderPosition::Inner, Packet::L3Tunnel(_, inner_l3)) => inner_l3.into(),
+            (HeaderPosition::Outer, Packet::Regular(l2)) => l2.get_l3(),
+            (HeaderPosition::Outer, Packet::L3Tunnel(l2, _)) => l2.get_l3(),
+            (HeaderPosition::Innermost, Packet::Regular(l2)) => l2.get_l3(),
+            (HeaderPosition::Innermost, Packet::L3Tunnel(_, inner_l3)) => inner_l3.into(),
+        }
+    }
+
+    pub fn get_l4(&self, position: HeaderPosition) -> Option<&L4Packet<'a>> {
+        // this is correct unless we have an L4Tunnel someday
+        self.get_l3(position)?.get_l4()
+    }
+}
+
+impl Display for Packet<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Packet::Regular(l2) => l2.get_l3(),
-            Packet::L3Tunnel(_, l3) => Some(l3),
+            Packet::Regular(inner) => write!(f, "Packet: {}", inner),
+            Packet::L3Tunnel(outer, inner) => {
+                write!(f, "Encapsulated Packet: {} | {}", outer, inner)
+            }
         }
     }
 }
