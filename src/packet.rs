@@ -80,7 +80,7 @@ impl<'a> Packet<'a> {
             (HeaderPosition::Outer, Packet::Regular(l2)) => l2.into(),
             (HeaderPosition::Outer, Packet::L3Tunnel(l2, _)) => l2.into(),
             (HeaderPosition::Innermost, Packet::Regular(l2)) => l2.into(),
-            (HeaderPosition::Innermost, Packet::L3Tunnel(l2, _)) => l2.into(),
+            (HeaderPosition::Innermost, Packet::L3Tunnel(l2, _)) => l2.into(), // will change if we support l2 encaps
         }
     }
 
