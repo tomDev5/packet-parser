@@ -1,5 +1,3 @@
-use anyhow::Context;
-use anyhow::Result;
 use pnet::packet::icmp::IcmpPacket;
 use std::net::IpAddr;
 
@@ -10,15 +8,9 @@ use packet_parser::{
     packet::{FourTuple, Packet},
 };
 
-#[cfg(debug_assertions)]
-use assert_no_alloc::{assert_no_alloc, AllocDisabler};
-#[cfg(debug_assertions)]
-#[global_allocator]
-static A: AllocDisabler = AllocDisabler;
-
 #[test]
-fn test_four_tuple() -> Result<()> {
-    assert_no_alloc(|| {
+fn test_four_tuple() {
+    let allocations = allocation_counter::count(|| {
         let pkt61 = &[
             0x78u8, 0x2b, 0x46, 0x4b, 0x3b, 0xab, 0xb4, 0x8c, 0x9d, 0x5d, 0x81, 0x8b, 0x08, 0x00,
             0x45, 0x00, 0x00, 0x32, 0x36, 0x2b, 0x40, 0x00, 0x80, 0x06, 0x08, 0x94, 0xc0, 0xa8,
@@ -26,11 +18,11 @@ fn test_four_tuple() -> Result<()> {
             0x88, 0xce, 0x7e, 0xbc, 0x50, 0x18, 0x02, 0x01, 0x0e, 0x83, 0x00, 0x00, 0x08, 0xff,
             0x08, 0x00, 0x07, 0x9e, 0x08, 0x00, 0x00, 0x00,
         ];
-        let parsed = Packet::try_from(pkt61.as_slice())?;
-        println!("{parsed:#?}");
+        let parsed = Packet::try_from(pkt61.as_slice()).expect("packet parse failed");
+
         let four_tuple = parsed
             .get_inner_four_tuple()
-            .context("Parsing four tuple failed")?;
+            .expect("parsing four tuple failed");
         let expected = FourTuple {
             source_ip: IpAddr::from([192, 168, 29, 17]),
             source_port: 60514,
@@ -38,13 +30,13 @@ fn test_four_tuple() -> Result<()> {
             destination_port: 25565,
         };
         assert_eq!(four_tuple, expected);
-        Ok(())
-    })
+    });
+    assert_eq!(allocations, 0);
 }
 
 #[test]
-fn test_gre() -> Result<()> {
-    assert_no_alloc(|| {
+fn test_gre() {
+    let allocations = allocation_counter::count(|| {
         let pkt1 = &[
             0xc2, 0x01, 0x57, 0x75, 0x00, 0x00, 0xc2, 0x00, 0x57, 0x75, 0x00, 0x00, 0x08, 0x00,
             0x45, 0x00, 0x00, 0x7c, 0x00, 0x0a, 0x00, 0x00, 0xff, 0x2f, 0xa7, 0x46, 0x0a, 0x00,
@@ -58,8 +50,8 @@ fn test_gre() -> Result<()> {
             0xab, 0xcd, 0xab, 0xcd, 0xab, 0xcd, 0xab, 0xcd, 0xab, 0xcd, 0xab, 0xcd,
         ];
 
-        let parsed = Packet::try_from(pkt1.as_slice())?;
-        let expected_icmp = IcmpPacket::new(&pkt1[58..]).context("Parsing Icmp manually failed")?;
+        let parsed = Packet::try_from(pkt1.as_slice()).expect("packet parse failed");
+        let expected_icmp = IcmpPacket::new(&pkt1[58..]).expect("Parsing Icmp manually failed");
 
         assert!(matches!(
             parsed,
@@ -72,14 +64,13 @@ fn test_gre() -> Result<()> {
                 L3Packet::Ipv4(_, L4Packet::Icmp(header))
             ) if header == expected_icmp
         ));
-
-        Ok(())
-    })
+    });
+    assert_eq!(allocations, 0);
 }
 
 #[test]
 fn test_with_payload() {
-    assert_no_alloc(|| {
+    let allocations = allocation_counter::count(|| {
         let pkt8 = &[
             0x00, 0x00, 0x01, 0x06, 0x00, 0x00, 0x92, 0x75, /* .......u */
             0xfe, 0xd1, 0x8e, 0x3b, 0x08, 0x00, 0x45, 0x00, /* ...;..E. */
@@ -105,5 +96,6 @@ fn test_with_payload() {
                 L3Packet::Ipv4(_, L4Packet::Tcp(_))
             ))
         ));
-    })
+    });
+    assert_eq!(allocations, 0);
 }

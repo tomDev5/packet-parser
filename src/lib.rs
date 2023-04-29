@@ -1,17 +1,19 @@
 //! Fast, Zero-Copy, Epic packet parser
 //!
 //! # Introduction
-//! This library is using [`pnet`] for the packet parsing.<br>
-//! Currently supporting the following protocols:
+//! This library is using [`pnet`] for the packet parsing, so adding more protocols is stupidly easy.
+//! <br>
+//! It currently supports the following protocols:
 //! - `Ethernet`
 //! - `IPv4`, `IPv6`, `Arp`
 //! - `TCP`, `UDP`, `ICMP`, `ICMPv6`
 //! - `GRE tunnel`
 //!
-//! # Usage
+//! # Parsing packets
 //! Simple parsing of a packet from bytes:
 //! ```rust
 //! use packet_parser::packet::Packet;
+//!
 //! let packet = &[
 //!     0x78u8, 0x2b, 0x46, 0x4b, 0x3b, 0xab, 0xb4, 0x8c, 0x9d, 0x5d, 0x81, 0x8b, 0x08, 0x00,
 //!     0x45, 0x00, 0x00, 0x32, 0x36, 0x2b, 0x40, 0x00, 0x80, 0x06, 0x08, 0x94, 0xc0, 0xa8,
@@ -22,7 +24,7 @@
 //! let parsed = Packet::try_from(packet.as_slice()).unwrap();
 //! println!("{parsed:#?}");
 //! ```
-//! output:
+//! This code will output the following:
 //! ```text
 //! Regular(
 //!     Ethernet(
@@ -35,9 +37,20 @@
 //!             ),
 //!         ),
 //!     ),
-//!     )
+//! )
+//! ```
+//!
+//! # Reading and writing packets with zero copy
+//! ```no_run, rust
+//! use packet_parser::{interface::get_zc_interface, packet::Packet};
+//!
+//! let mut capture = get_zc_interface("eno0").unwrap();
+//! let packet = capture.next_packet().unwrap();
+//! let packet = Packet::try_from(packet.data).unwrap();
 //! ```
 
+/// Exposes function that returns a zero-copy interface for reading packets
+pub mod interface;
 /// Encompases layer 2 protocols
 pub mod l2;
 /// Encompases layer 3 protocols
