@@ -15,8 +15,8 @@ pub enum ParseError {
     Ethernet,
     #[error("Failed to parse Vlan")]
     Vlan,
-    #[error("Error above")]
-    ErrorAbove(#[from] l3::ParseError),
+    #[error("Error in L3")]
+    L3Error(#[from] l3::ParseError),
 }
 
 type VlanPackets<'a> = SmallVec<[VlanPacket<'a>; 2]>;

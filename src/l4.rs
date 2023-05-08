@@ -21,8 +21,8 @@ pub enum ParseError {
     Icmp,
     #[error("Failed to parse Icmpv6")]
     Icmpv6,
-    #[error("Unknown protocol")]
-    UnknownProtocol,
+    #[error("Unknown L4 protocol")]
+    UnknownL4Protocol,
 }
 
 #[derive(Debug, PartialEq)]
@@ -47,7 +47,7 @@ impl<'a> TryFrom<(IpNextHeaderProtocol, &'a [u8])> for L4Packet<'a> {
             IpNextHeaderProtocols::Gre => Self::Gre(GrePacket::new(bytes).ok_or(ParseError::Gre)?),
             IpNextHeaderProtocols::Icmp => Self::Icmp(IcmpPacket::new(bytes).ok_or(ParseError::Icmp)?),
             IpNextHeaderProtocols::Icmpv6 => Self::Icmpv6(Icmpv6Packet::new(bytes).ok_or(ParseError::Icmpv6)?),
-            _ => return Err(ParseError::UnknownProtocol),
+            _ => return Err(ParseError::UnknownL4Protocol),
         })
     }
 }

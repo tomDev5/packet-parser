@@ -44,6 +44,7 @@
 pub mod l2;
 /// Encompases layer 3 protocols
 pub mod l3;
+pub mod l3_extensions;
 /// Encompases layer 4 protocols
 pub mod l4;
 /// Encompases general packet structures (four tuple, encapsulations, etc)

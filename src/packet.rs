@@ -14,9 +14,9 @@ use pnet::packet::Packet as _;
 pub enum ParseError {
     #[error("Invalid protocol after tunnel")]
     InvalidProtocolAfterTunnel,
-    #[error("Error above")]
+    #[error("Error in L2")]
     L2Error(#[from] l2::ParseError),
-    #[error("Error above")]
+    #[error("Error in L3")]
     L3Error(#[from] l3::ParseError),
     #[error("Missing L3")]
     MissingL3,
