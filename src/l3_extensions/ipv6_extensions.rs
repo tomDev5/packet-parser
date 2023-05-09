@@ -32,7 +32,7 @@ enum Ipv6ExtensionProtocolIds {
 
 #[derive(Debug, PartialEq)]
 pub struct Ipv6Extension<'a> {
-    packet: ExtensionPacket<'a>,
+    pub packet: ExtensionPacket<'a>,
     protocol: Ipv6ExtensionProtocolIds,
 }
 

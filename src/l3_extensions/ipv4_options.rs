@@ -11,7 +11,7 @@ pub struct Ipv4Option<'a> {
 
 impl<'a> Ipv4Option<'a> {
     fn new(bytes: &'a [u8]) -> Option<Self> {
-        let byte1 = bytes.get(0)?;
+        let byte1 = bytes.first()?;
         let copied = (byte1 & 0x80) != 0;
         let class = (byte1 & 0x60) >> 5;
         let number = Ipv4OptionNumber(byte1 & 0x1f);
