@@ -11,7 +11,7 @@ use pnet::packet::{
 use pnet::packet::Packet as _;
 
 use crate::{
-    l3_extensions::ipv6_extensions::{self, Ipv6Extension, Ipv6Extensions},
+    l3_extensions::ipv6_extensions::{self, Ipv6Extensions},
     l4::{self, L4Packet},
 };
 
@@ -53,28 +53,14 @@ impl<'a> TryFrom<(EtherType, &'a [u8])> for L3Packet<'a> {
             }
             EtherTypes::Ipv6 => {
                 let ip = Ipv6Packet::new(bytes).ok_or(ParseError::IPv6)?;
-                let mut next_protocol = ip.get_next_header();
-                let mut header_length = ip.packet_size() - ip.payload().len();
-
-                let mut extensions = Ipv6Extensions::new();
-                loop {
-                    let extension: Result<Ipv6Extension, ipv6_extensions::ParseError> =
-                        (next_protocol, &bytes[header_length..]).try_into();
-                    match extension {
-                        Ok(extension) => {
-                            let extension_length =
-                                extension.packet.get_hdr_ext_len() as usize * 8 + 8;
-                            header_length += extension_length;
-                            next_protocol = extension.packet.get_next_header();
-                            extensions.push(extension);
-                        }
-                        Err(ipv6_extensions::ParseError::ExtensionParseFailure) => {
-                            return Err(ipv6_extensions::ParseError::ExtensionParseFailure.into())
-                        }
-                        Err(ipv6_extensions::ParseError::UnknownIpv6Extension) => break,
-                    }
-                }
-                let l4_packet: L4Packet = (next_protocol, &bytes[header_length..]).try_into()?;
+                let header_length = ip.packet_size() - ip.payload().len();
+                let extensions: Ipv6Extensions =
+                    (&bytes[header_length..], ip.get_next_header()).try_into()?;
+                let l4_packet: L4Packet = (
+                    extensions.next_protocol,
+                    &bytes[header_length + extensions.length..],
+                )
+                    .try_into()?;
 
                 Self::Ipv6(ip, extensions, l4_packet)
             }

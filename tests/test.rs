@@ -154,12 +154,18 @@ fn test_ipv6_extensions() {
             ))
         ));
         let Packet::Regular(L2Packet::Ethernet(_, _, L3Packet::Ipv6(_, extensions, _))) = &parsed else {panic!("Invalid packet type")};
-        assert_eq!(extensions.len(), 1);
-        assert_eq!(extensions[0].packet.get_hdr_ext_len(), 4);
+        assert_eq!(extensions.extensions.len(), 1);
+        assert_eq!(extensions.extensions[0].packet.get_hdr_ext_len(), 4);
         assert_eq!(
-            extensions[0].packet.get_next_header(),
+            extensions.extensions[0].packet.get_next_header(),
             IpNextHeaderProtocols::Udp
-        )
+        );
+
+        let Packet::Regular(L2Packet::Ethernet(_, _, L3Packet::Ipv6(_, _, L4Packet::Udp(udp_header)))) = &parsed else {panic!("Invalid packet type")};
+        println!("{udp_header:?}");
+        assert_eq!(udp_header.get_source(), 53);
+        assert_eq!(udp_header.get_destination(), 53);
+        assert_eq!(udp_header.get_length(), 14);
     });
     assert_eq!(allocations, 0, "allocations detected");
 }
