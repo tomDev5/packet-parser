@@ -162,7 +162,6 @@ fn test_ipv6_extensions() {
         );
 
         let Packet::Regular(L2Packet::Ethernet(_, _, L3Packet::Ipv6(_, _, L4Packet::Udp(udp_header)))) = &parsed else {panic!("Invalid packet type")};
-        println!("{udp_header:?}");
         assert_eq!(udp_header.get_source(), 53);
         assert_eq!(udp_header.get_destination(), 53);
         assert_eq!(udp_header.get_length(), 14);
