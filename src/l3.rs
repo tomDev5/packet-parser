@@ -65,7 +65,7 @@ impl<'a> TryFrom<(EtherType, &'a [u8])> for L3Packet<'a> {
                 Self::Ipv6(ip, extensions, l4_packet)
             }
             EtherTypes::Arp => Self::Arp(ArpPacket::new(bytes).ok_or(ParseError::Arp)?),
-            _ => return Err(ParseError::UnknownL3Protocol),
+            _ => Err(ParseError::UnknownL3Protocol)?,
         })
     }
 }

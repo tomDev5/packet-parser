@@ -47,7 +47,7 @@ impl<'a> TryFrom<(IpNextHeaderProtocol, &'a [u8])> for L4Packet<'a> {
             IpNextHeaderProtocols::Gre => Self::Gre(GrePacket::new(bytes).ok_or(ParseError::Gre)?),
             IpNextHeaderProtocols::Icmp => Self::Icmp(IcmpPacket::new(bytes).ok_or(ParseError::Icmp)?),
             IpNextHeaderProtocols::Icmpv6 => Self::Icmpv6(Icmpv6Packet::new(bytes).ok_or(ParseError::Icmpv6)?),
-            _ => return Err(ParseError::UnknownL4Protocol),
+            _ => Err(ParseError::UnknownL4Protocol)?,
         })
     }
 }

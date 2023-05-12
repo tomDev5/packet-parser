@@ -60,12 +60,12 @@ impl<'a> Iterator for Ipv4OptionsIterator<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.offset >= self.bytes.len() {
-            return None;
+            None
+        } else {
+            let option = Ipv4Option::new(&self.bytes[self.offset..])?;
+            self.offset += option.length as usize;
+            Some(option)
         }
-
-        let option = Ipv4Option::new(&self.bytes[self.offset..])?;
-        self.offset += option.length as usize;
-        Some(option)
     }
 }
 
