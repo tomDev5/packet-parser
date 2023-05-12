@@ -1,21 +1,38 @@
+use std::fs::File;
+
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use packet_parser::packet::Packet;
+use pcap_file::pcap::PcapReader;
 
-fn pcap_parse_benchmark(c: &mut Criterion) {
-    let pkt61 = [
-        0x78u8, 0x2b, 0x46, 0x4b, 0x3b, 0xab, 0xb4, 0x8c, 0x9d, 0x5d, 0x81, 0x8b, 0x08, 0x00, 0x45,
-        0x00, 0x00, 0x32, 0x36, 0x2b, 0x40, 0x00, 0x80, 0x06, 0x08, 0x94, 0xc0, 0xa8, 0x1d, 0x11,
-        0xc0, 0xa8, 0x1d, 0xa5, 0xec, 0x62, 0x63, 0xdd, 0xc6, 0xef, 0xa3, 0xdf, 0x88, 0xce, 0x7e,
-        0xbc, 0x50, 0x18, 0x02, 0x01, 0x0e, 0x83, 0x00, 0x00, 0x08, 0xff, 0x08, 0x00, 0x07, 0x9e,
-        0x08, 0x00, 0x00, 0x00,
-    ];
+fn get_packets(file: &str) -> Vec<Vec<u8>> {
+    let file = File::open(file).unwrap();
+    let mut pcap_reader = PcapReader::new(file).unwrap();
+    let mut packets = Vec::new();
+    while let Some(packet) = pcap_reader
+        .next_packet()
+        .and_then(Result::ok)
+        .and_then(|packet| Some(packet.data.to_vec()))
+    {
+        packets.push(packet);
+    }
+    packets
+}
 
-    c.bench_function("pcap", |b| {
+fn parse_all_packets_in_pcap(c: &mut Criterion) {
+    let packets = get_packets("benches/sample.pcap");
+
+    c.bench_function("pcap_file", |b| {
         b.iter(|| {
-            let _ = Packet::try_from(black_box(pkt61.as_slice()));
+            for packet in &packets {
+                let _ = Packet::try_from(black_box(packet.as_ref()));
+            }
         })
     });
 }
 
-criterion_group!(benches, pcap_parse_benchmark);
+criterion_group!(
+    benches,
+    parse_all_packets_in_pcap,
+    parse_all_packets_in_pcap
+);
 criterion_main!(benches);
