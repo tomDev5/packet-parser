@@ -1,8 +1,7 @@
-use std::fs::File;
-
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use packet_parser::packet::Packet;
 use pcap_file::pcap::PcapReader;
+use std::fs::File;
 
 fn get_packets(file: &str) -> Vec<Vec<u8>> {
     let file = File::open(file).unwrap();
