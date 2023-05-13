@@ -69,12 +69,12 @@ impl<'a> Iterator for Ipv4OptionsIterator<'a> {
     }
 }
 
-pub trait Ipv4OptionsIteratorInPlace {
-    fn get_options_in_place(&self) -> Ipv4OptionsIterator;
+pub trait Ipv4ZeroCopyOptionsIterator {
+    fn get_options_zero_copy(&self) -> Ipv4OptionsIterator;
 }
 
-impl<'a> Ipv4OptionsIteratorInPlace for Ipv4Packet<'a> {
-    fn get_options_in_place(&self) -> Ipv4OptionsIterator {
+impl<'a> Ipv4ZeroCopyOptionsIterator for Ipv4Packet<'a> {
+    fn get_options_zero_copy(&self) -> Ipv4OptionsIterator {
         Ipv4OptionsIterator {
             bytes: self.get_options_raw(),
             offset: 0,

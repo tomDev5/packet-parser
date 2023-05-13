@@ -1,13 +1,11 @@
-use std::fmt::Display;
-
+use crate::l3::{self, L3Packet};
 use pnet::packet::{
     ethernet::{EtherTypes, EthernetPacket},
     vlan::VlanPacket,
 };
 use smallvec::SmallVec;
+use std::fmt::Display;
 use thiserror::Error;
-
-use crate::l3::{self, L3Packet};
 
 #[derive(Error, Debug)]
 pub enum ParseError {

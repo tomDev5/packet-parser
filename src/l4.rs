@@ -1,5 +1,3 @@
-use std::fmt::Display;
-
 use pnet::packet::{
     gre::GrePacket,
     icmp::IcmpPacket,
@@ -8,6 +6,7 @@ use pnet::packet::{
     tcp::TcpPacket,
     udp::UdpPacket,
 };
+use std::fmt::Display;
 
 #[derive(thiserror::Error, Debug)]
 pub enum ParseError {

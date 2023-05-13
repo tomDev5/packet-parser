@@ -1,19 +1,15 @@
-use std::{fmt::Display, net::IpAddr};
-
+use crate::{
+    l3_extensions::ipv6_extensions::{self, Ipv6Extensions},
+    l4::{self, L4Packet},
+};
 use pnet::packet::{
     arp::ArpPacket,
     ethernet::{EtherType, EtherTypes},
     ipv4::Ipv4Packet,
     ipv6::Ipv6Packet,
-    PacketSize,
+    Packet as _, PacketSize,
 };
-
-use pnet::packet::Packet as _;
-
-use crate::{
-    l3_extensions::ipv6_extensions::{self, Ipv6Extensions},
-    l4::{self, L4Packet},
-};
+use std::{fmt::Display, net::IpAddr};
 
 #[derive(thiserror::Error, Debug)]
 pub enum ParseError {

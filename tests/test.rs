@@ -1,13 +1,12 @@
-use pnet::packet::{icmp::IcmpPacket, ip::IpNextHeaderProtocols, ipv4::Ipv4OptionNumber};
-use std::net::IpAddr;
-
 use packet_parser::{
     l2::L2Packet,
     l3::L3Packet,
-    l3_extensions::ipv4_options::{Ipv4Option, Ipv4OptionsIteratorInPlace},
+    l3_extensions::ipv4_options::{Ipv4Option, Ipv4ZeroCopyOptionsIterator},
     l4::L4Packet,
     packet::{FourTuple, HeaderPosition, Packet},
 };
+use pnet::packet::{icmp::IcmpPacket, ip::IpNextHeaderProtocols, ipv4::Ipv4OptionNumber};
+use std::net::IpAddr;
 
 #[test]
 fn test_four_tuple() {
@@ -113,7 +112,7 @@ fn test_ipv4_options() {
         ];
         let parsed = Packet::try_from(packet.as_slice()).expect("Packet parse failed");
         let Packet::Regular(L2Packet::Ethernet(_, _, L3Packet::Ipv4(ipv4, _))) = &parsed else {panic!("Invalid packet type")};
-        let mut options = ipv4.get_options_in_place();
+        let mut options = ipv4.get_options_zero_copy();
         assert_eq!(
             options.next(),
             Some(Ipv4Option {

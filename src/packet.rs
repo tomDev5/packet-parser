@@ -1,14 +1,10 @@
-use std::{fmt::Display, net::IpAddr};
-
-use pnet::packet::ethernet::EtherType;
-
 use crate::{
     l2::{self, L2Packet},
     l3::{self, L3Packet},
     l4::L4Packet,
 };
-
-use pnet::packet::Packet as _;
+use pnet::packet::{ethernet::EtherType, Packet as _};
+use std::{fmt::Display, net::IpAddr};
 
 #[derive(thiserror::Error, Debug)]
 pub enum ParseError {
