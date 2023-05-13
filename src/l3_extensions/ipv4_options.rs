@@ -46,12 +46,11 @@ impl<'a> Ipv4Option<'a> {
 
 pub struct Ipv4OptionsIterator<'a> {
     bytes: &'a [u8],
-    offset: usize,
 }
 
 impl<'a> Ipv4OptionsIterator<'a> {
     pub fn new(bytes: &'a [u8]) -> Self {
-        Self { bytes, offset: 0 }
+        Self { bytes }
     }
 }
 
@@ -59,13 +58,9 @@ impl<'a> Iterator for Ipv4OptionsIterator<'a> {
     type Item = Ipv4Option<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.offset >= self.bytes.len() {
-            None
-        } else {
-            let option = Ipv4Option::new(&self.bytes[self.offset..])?;
-            self.offset += option.length as usize;
-            Some(option)
-        }
+        let option = Ipv4Option::new(self.bytes)?;
+        self.bytes = &self.bytes[option.length.into()..];
+        Some(option)
     }
 }
 
@@ -77,7 +72,6 @@ impl<'a> Ipv4ZeroCopyOptionsIterator for Ipv4Packet<'a> {
     fn get_options_zero_copy(&self) -> Ipv4OptionsIterator {
         Ipv4OptionsIterator {
             bytes: self.get_options_raw(),
-            offset: 0,
         }
     }
 }
