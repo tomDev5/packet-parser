@@ -16,14 +16,7 @@ impl<'a> Ipv4Option<'a> {
         let class = (byte1 & 0x60) >> 5;
         let number = Ipv4OptionNumber(byte1 & 0x1f);
         Some(match number {
-            Ipv4OptionNumbers::EOL => Self {
-                copied,
-                class,
-                number,
-                length: 1,
-                data: &[],
-            },
-            Ipv4OptionNumbers::NOP => Self {
+            Ipv4OptionNumbers::EOL | Ipv4OptionNumbers::NOP => Self {
                 copied,
                 class,
                 number,
@@ -31,7 +24,7 @@ impl<'a> Ipv4Option<'a> {
                 data: &[],
             },
             number => {
-                let length = bytes[1];
+                let length = bytes.get(1)?.clone();
                 Self {
                     copied,
                     class,
@@ -59,7 +52,7 @@ impl<'a> Iterator for Ipv4OptionsIterator<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         let option = Ipv4Option::new(self.bytes)?;
-        self.bytes = &self.bytes[option.length.into()..];
+        self.bytes = &self.bytes.get(option.length.into()..)?;
         Some(option)
     }
 }

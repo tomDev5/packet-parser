@@ -9,20 +9,18 @@ pub struct TcpOption<'a> {
 
 impl<'a> TcpOption<'a> {
     fn new(bytes: &'a [u8]) -> Option<Self> {
-        let number = TcpOptionNumber(bytes[0]);
-        let length = match number {
-            TcpOptionNumbers::EOL | TcpOptionNumbers::NOP => 0,
-            _ => bytes[1],
-        };
-        let data = if length > 0 {
-            &bytes[2..length as usize]
-        } else {
-            &[]
-        };
-        Some(TcpOption {
-            number,
-            length,
-            data,
+        let number = TcpOptionNumber(bytes.get(0)?.clone());
+        Some(match number {
+            TcpOptionNumbers::EOL | TcpOptionNumbers::NOP => Self {
+                number,
+                length: 0,
+                data: &[],
+            },
+            _ => Self {
+                number,
+                length: bytes.get(1)?.clone(),
+                data: bytes.get(2..bytes.get(1)?.clone() as usize)?.clone(),
+            },
         })
     }
 }
