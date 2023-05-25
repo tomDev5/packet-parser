@@ -3,9 +3,12 @@ use packet_parser::{
     l3::L3Packet,
     l3_extensions::ipv4_options::{Ipv4Option, Ipv4ZeroCopyOptionsIterator},
     l4::L4Packet,
+    l4_extensions::tcp_options::{TcpOption, TcpZeroCopyOptionsIterator},
     packet::{FourTuple, HeaderPosition, Packet},
 };
-use pnet::packet::{icmp::IcmpPacket, ip::IpNextHeaderProtocols, ipv4::Ipv4OptionNumber};
+use pnet::packet::{
+    icmp::IcmpPacket, ip::IpNextHeaderProtocols, ipv4::Ipv4OptionNumber, tcp::TcpOptionNumbers,
+};
 use std::net::IpAddr;
 
 #[test]
@@ -131,6 +134,8 @@ fn test_ipv4_options() {
     assert_eq!(allocations, 0, "allocations detected");
 }
 
+//todo: test a packet with multiple IPv4 options
+
 #[test]
 fn test_ipv6_extensions() {
     let allocations = allocation_counter::count(|| {
@@ -152,7 +157,7 @@ fn test_ipv6_extensions() {
                 L3Packet::Ipv6(_, _, L4Packet::Udp(_))
             ))
         ));
-        let Packet::Regular(L2Packet::Ethernet(_, _, L3Packet::Ipv6(_, extensions, _))) = &parsed else {panic!("Invalid packet type")};
+        let Packet::Regular(L2Packet::Ethernet(_, _, L3Packet::Ipv6(_, extensions, L4Packet::Udp(udp_header)))) = &parsed else {panic!("Invalid packet type")};
         assert_eq!(extensions.extensions.len(), 1);
         assert_eq!(extensions.extensions[0].packet.get_hdr_ext_len(), 4);
         assert_eq!(
@@ -160,10 +165,60 @@ fn test_ipv6_extensions() {
             IpNextHeaderProtocols::Udp
         );
 
-        let Packet::Regular(L2Packet::Ethernet(_, _, L3Packet::Ipv6(_, _, L4Packet::Udp(udp_header)))) = &parsed else {panic!("Invalid packet type")};
         assert_eq!(udp_header.get_source(), 53);
         assert_eq!(udp_header.get_destination(), 53);
         assert_eq!(udp_header.get_length(), 14);
+    });
+    assert_eq!(allocations, 0, "allocations detected");
+}
+
+//todo: test a packet with multiple IPv6 extensions
+
+#[test]
+fn test_tcp_options() {
+    let allocations = allocation_counter::count(|| {
+        let packet = &[
+            0x40, 0x16, 0x7e, 0x22, 0xbc, 0xdf, 0xb4, 0xb0, 0x24, 0xf3, 0xf8, 0x10, 0x08, 0x00,
+            0x45, 0x00, 0x00, 0x34, 0x04, 0xe5, 0x40, 0x00, 0x3a, 0x06, 0xb0, 0xfc, 0x68, 0x11,
+            0x61, 0x6c, 0xc0, 0xa8, 0x00, 0xbd, 0x01, 0xbb, 0x09, 0x84, 0x36, 0xe9, 0x95, 0x73,
+            0x83, 0x5a, 0x1d, 0xac, 0x80, 0x10, 0x00, 0x08, 0x34, 0x24, 0x00, 0x00, 0x01, 0x01,
+            0x05, 0x0a, 0x83, 0x5a, 0x1d, 0xab, 0x83, 0x5a, 0x1d, 0xac,
+        ];
+        let parsed = Packet::try_from(packet.as_slice()).expect("Packet parse failed");
+        assert!(matches!(
+            parsed,
+            Packet::Regular(L2Packet::Ethernet(
+                _,
+                _,
+                L3Packet::Ipv4(_, L4Packet::Tcp(_))
+            ))
+        ));
+        let Packet::Regular(L2Packet::Ethernet(_, _, L3Packet::Ipv4(_, L4Packet::Tcp(tcp)))) = &parsed else {panic!("Invalid packet type")};
+        let mut options = tcp.get_options_zero_copy();
+        assert_eq!(
+            options.next(),
+            Some(TcpOption {
+                number: TcpOptionNumbers::NOP,
+                length: 0,
+                data: &[]
+            })
+        );
+        assert_eq!(
+            options.next(),
+            Some(TcpOption {
+                number: TcpOptionNumbers::NOP,
+                length: 0,
+                data: &[]
+            })
+        );
+        assert_eq!(
+            options.next(),
+            Some(TcpOption {
+                number: TcpOptionNumbers::SACK,
+                length: 10,
+                data: &[0x83, 0x5a, 0x1d, 0xab, 0x83, 0x5a, 0x1d, 0xac]
+            })
+        );
     });
     assert_eq!(allocations, 0, "allocations detected");
 }

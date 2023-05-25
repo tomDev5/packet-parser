@@ -57,6 +57,6 @@ pub mod l3;
 pub mod l3_extensions;
 /// Layer 4 protocols
 pub mod l4;
-//TODO pub mod l4_extensions;
+pub mod l4_extensions;
 /// General packet structures (four tuple, encapsulations, etc)
 pub mod packet;
