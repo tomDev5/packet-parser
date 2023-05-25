@@ -44,7 +44,7 @@ impl<'a> Iterator for TcpOptionsIterator<'a> {
             TcpOptionNumbers::EOL | TcpOptionNumbers::NOP => 1,
             _ => 2,
         } + option.data.len();
-        self.bytes = &self.bytes[total_length..];
+        self.bytes = &self.bytes.get(total_length..)?;
         Some(option)
     }
 }

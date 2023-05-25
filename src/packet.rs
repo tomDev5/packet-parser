@@ -18,6 +18,8 @@ pub enum ParseError {
     MissingL3,
     #[error("Missing L4")]
     MissingL4,
+    #[error("GRE Routing not supported in pnet")]
+    GreRoutingNotSupportedInPnet,
 }
 
 #[derive(Debug, PartialEq)]
@@ -39,8 +41,13 @@ impl<'a> TryFrom<&'a [u8]> for Packet<'a> {
 
         Ok(match l4 {
             L4Packet::Gre(gre) => {
+                if gre.get_routing_present() == 1 {
+                    return Err(ParseError::GreRoutingNotSupportedInPnet);
+                }
                 let outer_length = bytes.len() - gre.payload().len();
-                let inner_buffer = &bytes[outer_length..];
+                let inner_buffer = bytes
+                    .get(outer_length..)
+                    .ok_or(ParseError::InvalidProtocolAfterTunnel)?;
                 let after_tunnel = (EtherType(gre.get_protocol_type()), inner_buffer).try_into()?;
 
                 Packet::L3Tunnel(l2, after_tunnel)

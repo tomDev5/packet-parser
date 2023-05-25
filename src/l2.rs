@@ -37,13 +37,15 @@ impl<'a> TryFrom<&'a [u8]> for L2Packet<'a> {
         const VLAN_LENGTH: usize = 4;
 
         let header = EthernetPacket::new(bytes).ok_or(ParseError::Ethernet)?;
-        bytes = &bytes[ETHERNET_LENGTH_WITHOUT_PROTOCOL..];
+        bytes = bytes
+            .get(ETHERNET_LENGTH_WITHOUT_PROTOCOL..)
+            .ok_or(ParseError::Ethernet)?;
 
         let mut vlans = VlanPackets::new();
         let mut ethertype = header.get_ethertype();
         while ethertype == EtherTypes::Vlan {
             let vlan_packet = VlanPacket::new(bytes).ok_or(ParseError::Vlan)?;
-            bytes = &bytes[VLAN_LENGTH..];
+            bytes = bytes.get(VLAN_LENGTH..).ok_or(ParseError::Vlan)?;
             ethertype = vlan_packet.get_ethertype();
             vlans.push(vlan_packet);
         }

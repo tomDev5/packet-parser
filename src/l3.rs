@@ -42,19 +42,28 @@ impl<'a> TryFrom<(EtherType, &'a [u8])> for L3Packet<'a> {
             EtherTypes::Ipv4 => {
                 let ip = Ipv4Packet::new(bytes).ok_or(ParseError::IPv4)?;
                 let next_protocol = ip.get_next_level_protocol();
-                let header_length = ip.packet_size() - ip.payload().len();
-                let l4_packet = (next_protocol, &bytes[header_length..]).try_into()?;
+                let l4_start = bytes.len() - ip.payload().len();
+                let l4_packet = (
+                    next_protocol,
+                    bytes.get(l4_start..).ok_or(ParseError::IPv4)?,
+                )
+                    .try_into()?;
 
                 Self::Ipv4(ip, l4_packet)
             }
             EtherTypes::Ipv6 => {
                 let ip = Ipv6Packet::new(bytes).ok_or(ParseError::IPv6)?;
                 let header_length = ip.packet_size() - ip.payload().len();
-                let extensions: Ipv6Extensions =
-                    (&bytes[header_length..], ip.get_next_header()).try_into()?;
+                let extensions: Ipv6Extensions = (
+                    bytes.get(header_length..).ok_or(ParseError::IPv6)?,
+                    ip.get_next_header(),
+                )
+                    .try_into()?;
                 let l4_packet: L4Packet = (
                     extensions.next_protocol,
-                    &bytes[header_length + extensions.length..],
+                    bytes
+                        .get(header_length + extensions.length..)
+                        .ok_or(ParseError::IPv6)?,
                 )
                     .try_into()?;
 
