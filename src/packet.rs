@@ -23,6 +23,7 @@ pub enum ParseError {
 }
 
 #[derive(Debug, PartialEq)]
+#[repr(align(64))]
 pub enum Packet<'a> {
     Regular(L2Packet<'a>),
     L3Tunnel(L2Packet<'a>, L3Packet<'a>),
