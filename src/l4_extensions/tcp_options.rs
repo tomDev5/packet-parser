@@ -9,7 +9,7 @@ pub struct TcpOption<'a> {
 
 impl<'a> TcpOption<'a> {
     fn new(bytes: &'a [u8]) -> Option<Self> {
-        let number = TcpOptionNumber(bytes.get(0)?.clone());
+        let number = TcpOptionNumber(*bytes.first()?);
         Some(match number {
             TcpOptionNumbers::EOL | TcpOptionNumbers::NOP => Self {
                 number,
@@ -18,8 +18,8 @@ impl<'a> TcpOption<'a> {
             },
             _ => Self {
                 number,
-                length: bytes.get(1)?.clone(),
-                data: bytes.get(2..bytes.get(1)?.clone() as usize)?.clone(),
+                length: *bytes.get(1)?,
+                data: bytes.get(2..*bytes.get(1)? as usize)?,
             },
         })
     }
@@ -44,7 +44,7 @@ impl<'a> Iterator for TcpOptionsIterator<'a> {
             TcpOptionNumbers::EOL | TcpOptionNumbers::NOP => 1,
             _ => 2,
         } + option.data.len();
-        self.bytes = &self.bytes.get(total_length..)?;
+        self.bytes = self.bytes.get(total_length..)?;
         Some(option)
     }
 }

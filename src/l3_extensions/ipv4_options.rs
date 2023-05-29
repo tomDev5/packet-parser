@@ -24,7 +24,7 @@ impl<'a> Ipv4Option<'a> {
                 data: &[],
             },
             number => {
-                let length = bytes.get(1)?.clone();
+                let length = *bytes.get(1)?;
                 Self {
                     copied,
                     class,
@@ -52,7 +52,7 @@ impl<'a> Iterator for Ipv4OptionsIterator<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         let option = Ipv4Option::new(self.bytes)?;
-        self.bytes = &self.bytes.get(option.length.into()..)?;
+        self.bytes = self.bytes.get(option.length.into()..)?;
         Some(option)
     }
 }

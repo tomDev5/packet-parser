@@ -79,7 +79,7 @@ impl<'a> TryFrom<(&'a [u8], IpNextHeaderProtocol)> for Ipv6Extensions<'a> {
             match extension {
                 Ok(extension) => {
                     let extension_length = extension.packet.get_hdr_ext_len() as usize * 8 + 8;
-                    buf = &buf
+                    buf = buf
                         .get(extension_length..)
                         .ok_or(ParseError::ExtensionParseFailure)?;
                     next_protocol = extension.packet.get_next_header();
