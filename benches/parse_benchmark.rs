@@ -1,7 +1,13 @@
+// in order to generate flame graph run:
+// `cargo bench --bench parse_benchmark -- --profile-time=20`
+
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use etherparse::PacketBuilder;
+use flame_graph_profiler::FlamegraphProfiler;
 use packet_parser::packet::Packet;
 use std::time::Duration;
+
+mod flame_graph_profiler;
 
 fn parse_packets(c: &mut Criterion) {
     let ipv4_udp = {
@@ -75,7 +81,7 @@ fn parse_packets(c: &mut Criterion) {
 
 criterion_group!(
     name = benches;
-    config = Criterion::default().measurement_time(Duration::from_secs(20)).warm_up_time(Duration::from_secs(3));
+    config = Criterion::default().with_profiler(FlamegraphProfiler::new(10_000)).measurement_time(Duration::from_secs(20)).warm_up_time(Duration::from_secs(3));
     targets = parse_packets
 );
 criterion_main!(benches);

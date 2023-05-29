@@ -9,6 +9,7 @@ edition = "2021"
 num-derive = "0.3.3"
 num-traits = "0.2.15"
 pnet = "0.33.0"
+pprof = { version = "0.11.1", features = ["flamegraph"] }
 smallvec = "1.10.0"
 thiserror = "1.0.38"
 
