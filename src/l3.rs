@@ -5,6 +5,7 @@ use crate::{
 use pnet::packet::{
     arp::ArpPacket,
     ethernet::{EtherType, EtherTypes},
+    ip::{IpNextHeaderProtocol, IpNextHeaderProtocols},
     ipv4::Ipv4Packet,
     ipv6::Ipv6Packet,
     Packet as _, PacketSize,
@@ -80,7 +81,7 @@ impl<'a> L3Packet<'a> {
         match self {
             L3Packet::Ipv4(header, _) => Some(header.get_source().into()),
             L3Packet::Ipv6(header, _, _) => Some(header.get_source().into()),
-            _ => None,
+            L3Packet::Arp(_) => None,
         }
     }
 
@@ -88,7 +89,7 @@ impl<'a> L3Packet<'a> {
         match self {
             L3Packet::Ipv4(header, _) => Some(header.get_destination().into()),
             L3Packet::Ipv6(header, _, _) => Some(header.get_destination().into()),
-            _ => None,
+            L3Packet::Arp(_) => None,
         }
     }
 
@@ -96,8 +97,19 @@ impl<'a> L3Packet<'a> {
         match self {
             L3Packet::Ipv4(_, l4) => Some(l4),
             L3Packet::Ipv6(_, _, l4) => Some(l4),
-            _ => None,
+            L3Packet::Arp(_) => None,
         }
+    }
+
+    pub fn get_l4_protocol(&self) -> Option<IpNextHeaderProtocol> {
+        let l4 = self.get_l4()?;
+        Some(match l4 {
+            L4Packet::Tcp(_) => IpNextHeaderProtocols::Tcp,
+            L4Packet::Udp(_) => IpNextHeaderProtocols::Udp,
+            L4Packet::Gre(_) => IpNextHeaderProtocols::Gre,
+            L4Packet::Icmp(_) => IpNextHeaderProtocols::Icmp,
+            L4Packet::Icmpv6(_) => IpNextHeaderProtocols::Icmpv6,
+        })
     }
 }
 

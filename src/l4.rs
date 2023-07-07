@@ -56,7 +56,7 @@ impl<'a> L4Packet<'a> {
         match self {
             L4Packet::Tcp(header) => Some(header.get_source()),
             L4Packet::Udp(header) => Some(header.get_source()),
-            _ => None,
+            L4Packet::Gre(_) | L4Packet::Icmp(_) | L4Packet::Icmpv6(_) => None,
         }
     }
 
@@ -64,7 +64,7 @@ impl<'a> L4Packet<'a> {
         match self {
             L4Packet::Tcp(header) => Some(header.get_destination()),
             L4Packet::Udp(header) => Some(header.get_destination()),
-            _ => None,
+            L4Packet::Gre(_) | L4Packet::Icmp(_) | L4Packet::Icmpv6(_) => None,
         }
     }
 }

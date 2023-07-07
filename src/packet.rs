@@ -4,7 +4,7 @@ use crate::{
     l4::L4Packet,
 };
 use pnet::packet::{ethernet::EtherType, Packet as _};
-use std::{fmt::Display, net::IpAddr};
+use std::fmt::Display;
 
 #[derive(thiserror::Error, Debug)]
 pub enum ParseError {
@@ -66,18 +66,6 @@ pub enum HeaderPosition {
 }
 
 impl<'a> Packet<'a> {
-    pub fn get_four_tuple(&self, position: HeaderPosition) -> Option<FourTuple> {
-        let l3 = self.get_l3(position)?;
-        let l4 = self.get_l4(position)?;
-
-        Some(FourTuple {
-            source_ip: l3.get_source()?,
-            source_port: l4.get_source()?,
-            destination_ip: l3.get_destination()?,
-            destination_port: l4.get_destination()?,
-        })
-    }
-
     pub fn get_l2(&self, position: HeaderPosition) -> Option<&L2Packet<'a>> {
         match (position, self) {
             (HeaderPosition::Inner, _) => None, // no l2 encaps are supported atm
@@ -113,23 +101,5 @@ impl Display for Packet<'_> {
                 write!(f, "Encapsulated Packet: {} | {}", outer, inner)
             }
         }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct FourTuple {
-    pub source_ip: IpAddr,
-    pub source_port: u16,
-    pub destination_ip: IpAddr,
-    pub destination_port: u16,
-}
-
-impl Display for FourTuple {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}:{} -> {}:{}",
-            self.source_ip, self.source_port, self.destination_ip, self.destination_port
-        )
     }
 }

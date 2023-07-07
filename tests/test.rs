@@ -4,7 +4,8 @@ use packet_parser::{
     l3_extensions::ipv4_options::{Ipv4Option, Ipv4ZeroCopyOptionsIterator},
     l4::L4Packet,
     l4_extensions::tcp_options::{TcpOption, TcpZeroCopyOptionsIterator},
-    packet::{FourTuple, HeaderPosition, Packet},
+    packet::{HeaderPosition, Packet},
+    tuples::FourTuple,
 };
 use pnet::packet::{
     icmp::IcmpPacket, ip::IpNextHeaderProtocols, ipv4::Ipv4OptionNumber, tcp::TcpOptionNumbers,
