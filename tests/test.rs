@@ -5,7 +5,7 @@ use packet_parser::{
     l4::L4Packet,
     l4_extensions::tcp_options::{TcpOption, TcpZeroCopyOptionsIterator},
     packet::{HeaderPosition, Packet},
-    tuples::FourTuple,
+    tuples::{FiveTuple, FourTuple},
 };
 use pnet::packet::{
     icmp::IcmpPacket, ip::IpNextHeaderProtocols, ipv4::Ipv4OptionNumber, tcp::TcpOptionNumbers,
@@ -34,6 +34,18 @@ fn test_four_tuple() {
             destination_port: 25565,
         };
         assert_eq!(four_tuple, expected);
+
+        let five_tuple = parsed
+            .get_five_tuple(HeaderPosition::Innermost)
+            .expect("parsing four tuple failed");
+        let expected = FiveTuple {
+            source_ip: IpAddr::from([192, 168, 29, 17]),
+            source_port: 60514,
+            destination_ip: IpAddr::from([192, 168, 29, 165]),
+            destination_port: 25565,
+            protocol: IpNextHeaderProtocols::Tcp,
+        };
+        assert_eq!(five_tuple, expected);
     });
     assert_eq!(allocations, 0, "allocations detected");
 }
