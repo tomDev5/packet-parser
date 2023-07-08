@@ -1,13 +1,13 @@
 // in order to generate flame graph run:
 // `cargo bench --bench parse_benchmark -- --profile-time=20`
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{black_box, criterion_group, Criterion};
 use etherparse::PacketBuilder;
-use flame_graph_profiler::FlamegraphProfiler;
-use packet_parser::packet::Packet;
+use packet_parser::{
+    packet::{HeaderPosition, Packet},
+    tuples::FourTuple,
+};
 use std::time::Duration;
-
-mod flame_graph_profiler;
 
 fn simple_packets(c: &mut Criterion) {
     let ipv4_udp = {
@@ -102,9 +102,49 @@ fn tunnel_packets(c: &mut Criterion) {
 
 criterion_group!(
     name = benches;
-    config = Criterion::default().with_profiler(FlamegraphProfiler::new(10_000))
-                                 .measurement_time(Duration::from_secs(20))
+    config = Criterion::default().measurement_time(Duration::from_secs(6))
                                  .warm_up_time(Duration::from_secs(3));
     targets = simple_packets, tunnel_packets
 );
-criterion_main!(benches);
+
+fn tuples(c: &mut Criterion) {
+    let ipv4_udp = {
+        let builder = PacketBuilder::ethernet2([1, 2, 3, 4, 5, 6], [7, 8, 9, 10, 11, 12])
+            .ipv4([1; 4], [2; 4], 20)
+            .udp(21, 1234);
+        let payload = [1, 2, 3, 4, 5, 6, 7, 8];
+        let mut packet_bytes = Vec::<u8>::with_capacity(builder.size(payload.len()));
+        builder.write(&mut packet_bytes, &payload).unwrap();
+        packet_bytes
+    };
+    let packet =
+        Packet::try_from(black_box(ipv4_udp.as_ref())).expect("packet parse failed in benchmark");
+    c.bench_function("four_tuple", |b| {
+        b.iter(|| packet.get_four_tuple(HeaderPosition::Innermost))
+    });
+    c.bench_function("five_tuple", |b| {
+        b.iter(|| packet.get_five_tuple(HeaderPosition::Innermost))
+    });
+    c.bench_function("four_from_five_tuple", |b| {
+        b.iter(|| {
+            let _: Option<FourTuple> = packet
+                .get_five_tuple(HeaderPosition::Innermost)
+                .map(|five| five.into());
+        })
+    });
+}
+
+criterion_group!(
+    name = tuple_tests;
+    config = Criterion::default().measurement_time(Duration::from_secs(6))
+                                 .warm_up_time(Duration::from_secs(3));
+    targets = tuples
+);
+
+fn main() {
+    benches();
+    tuple_tests();
+    ::criterion::Criterion::default()
+        .configure_from_args()
+        .final_summary();
+}

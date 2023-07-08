@@ -24,8 +24,18 @@ impl Display for FourTuple {
 
 impl<'a> Packet<'a> {
     pub fn get_four_tuple(&self, position: HeaderPosition) -> Option<FourTuple> {
-        let l3 = self.get_l3(position)?;
-        let l4 = self.get_l4(position)?;
+        let (l3, l4) = match position {
+            HeaderPosition::Inner | HeaderPosition::Outer => {
+                (self.get_l3(position)?, self.get_l4(position)?)
+            }
+            HeaderPosition::Innermost => self
+                .get_l3(HeaderPosition::Inner)
+                .and_then(|l3| self.get_l4(HeaderPosition::Inner).map(|l4| (l3, l4)))
+                .or_else(|| {
+                    self.get_l3(HeaderPosition::Outer)
+                        .and_then(|l3| self.get_l4(HeaderPosition::Outer).map(|l4| (l3, l4)))
+                })?,
+        };
 
         Some(FourTuple {
             source_ip: l3.get_source()?,
@@ -61,8 +71,18 @@ impl Display for FiveTuple {
 
 impl<'a> Packet<'a> {
     pub fn get_five_tuple(&self, position: HeaderPosition) -> Option<FiveTuple> {
-        let l3 = self.get_l3(position)?;
-        let l4 = self.get_l4(position)?;
+        let (l3, l4) = match position {
+            HeaderPosition::Inner | HeaderPosition::Outer => {
+                (self.get_l3(position)?, self.get_l4(position)?)
+            }
+            HeaderPosition::Innermost => self
+                .get_l3(HeaderPosition::Inner)
+                .and_then(|l3| self.get_l4(HeaderPosition::Inner).map(|l4| (l3, l4)))
+                .or_else(|| {
+                    self.get_l3(HeaderPosition::Outer)
+                        .and_then(|l3| self.get_l4(HeaderPosition::Outer).map(|l4| (l3, l4)))
+                })?,
+        };
 
         Some(FiveTuple {
             source_ip: l3.get_source()?,
@@ -71,5 +91,16 @@ impl<'a> Packet<'a> {
             destination_port: l4.get_destination()?,
             protocol: l3.get_l4_protocol()?,
         })
+    }
+}
+
+impl From<FiveTuple> for FourTuple {
+    fn from(five_tuple: FiveTuple) -> Self {
+        Self {
+            source_ip: five_tuple.source_ip,
+            source_port: five_tuple.source_port,
+            destination_ip: five_tuple.destination_ip,
+            destination_port: five_tuple.destination_port,
+        }
     }
 }
