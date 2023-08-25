@@ -45,6 +45,8 @@
 //! )
 //! ```
 
+pub use pnet::packet::Packet as PacketTrait;
+
 /// Layer 2 protocols
 pub mod l2;
 /// Layer 3 protocols

@@ -91,6 +91,17 @@ impl<'a> Packet<'a> {
         // this is correct unless we have an L4Tunnel someday
         self.get_l3(position)?.get_l4()
     }
+
+    pub fn get_payload(&self) -> Option<&[u8]> {
+        self.get_l4(HeaderPosition::Innermost)
+            .and_then(move |l4| match l4 {
+                L4Packet::Tcp(tcp) => Some(tcp.payload()),
+                L4Packet::Udp(udp) => Some(udp.payload()),
+                L4Packet::Gre(gre) => Some(gre.payload()),
+                L4Packet::Icmp(icmp) => Some(icmp.payload()),
+                L4Packet::Icmpv6(icmpv6) => Some(icmpv6.payload()),
+            })
+    }
 }
 
 impl Display for Packet<'_> {
