@@ -14,7 +14,7 @@ use std::net::IpAddr;
 
 #[test]
 fn test_four_tuple() {
-    let allocations = allocation_counter::count(|| {
+    let allocations = allocation_counter::measure(|| {
         let packet = &[
             0x78u8, 0x2b, 0x46, 0x4b, 0x3b, 0xab, 0xb4, 0x8c, 0x9d, 0x5d, 0x81, 0x8b, 0x08, 0x00,
             0x45, 0x00, 0x00, 0x32, 0x36, 0x2b, 0x40, 0x00, 0x80, 0x06, 0x08, 0x94, 0xc0, 0xa8,
@@ -47,12 +47,12 @@ fn test_four_tuple() {
         };
         assert_eq!(five_tuple, expected);
     });
-    assert_eq!(allocations, 0, "allocations detected");
+    assert_eq!(allocations.count_total, 0, "allocations detected");
 }
 
 #[test]
 fn test_gre() {
-    let allocations = allocation_counter::count(|| {
+    let allocations = allocation_counter::measure(|| {
         let packet = &[
             0xc2, 0x01, 0x57, 0x75, 0x00, 0x00, 0xc2, 0x00, 0x57, 0x75, 0x00, 0x00, 0x08, 0x00,
             0x45, 0x00, 0x00, 0x7c, 0x00, 0x0a, 0x00, 0x00, 0xff, 0x2f, 0xa7, 0x46, 0x0a, 0x00,
@@ -81,12 +81,12 @@ fn test_gre() {
             ) if header == expected_icmp
         ));
     });
-    assert_eq!(allocations, 0, "allocations detected");
+    assert_eq!(allocations.count_total, 0, "allocations detected");
 }
 
 #[test]
 fn test_with_payload() {
-    let allocations = allocation_counter::count(|| {
+    let allocations = allocation_counter::measure(|| {
         let packet = &[
             0x00, 0x00, 0x01, 0x06, 0x00, 0x00, 0x92, 0x75, 0xfe, 0xd1, 0x8e, 0x3b, 0x08, 0x00,
             0x45, 0x00, 0x00, 0x4b, 0xd7, 0xb2, 0x40, 0x00, 0x40, 0x06, 0x4c, 0xf6, 0x0a, 0x01,
@@ -108,12 +108,12 @@ fn test_with_payload() {
             ))
         ));
     });
-    assert_eq!(allocations, 0, "allocations detected");
+    assert_eq!(allocations.count_total, 0, "allocations detected");
 }
 
 #[test]
 fn test_ipv4_options() {
-    let allocations = allocation_counter::count(|| {
+    let allocations = allocation_counter::measure(|| {
         let packet = &[
             0xc4, 0x12, 0xf5, 0xff, 0x72, 0xe8, 0x08, 0x00, 0x27, 0x19, 0x1c, 0x78, 0x08, 0x00,
             0x4f, 0x00, 0x00, 0x7c, 0x82, 0xe1, 0x40, 0x00, 0x40, 0x01, 0x0d, 0x44, 0x0a, 0x00,
@@ -144,14 +144,14 @@ fn test_ipv4_options() {
         );
         assert_eq!(options.next(), None);
     });
-    assert_eq!(allocations, 0, "allocations detected");
+    assert_eq!(allocations.count_total, 0, "allocations detected");
 }
 
 //todo: test a packet with multiple IPv4 options
 
 #[test]
 fn test_ipv6_extensions() {
-    let allocations = allocation_counter::count(|| {
+    let allocations = allocation_counter::measure(|| {
         let packet = &[
             0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x86, 0xdd, 0x60,
             0x0, 0x0, 0x0, 0x0, 0x36, 0x2b, 0x40, 0x20, 0x1, 0xd, 0xb8, 0x0, 0x0, 0x0, 0x0, 0x0,
@@ -182,14 +182,14 @@ fn test_ipv6_extensions() {
         assert_eq!(udp_header.get_destination(), 53);
         assert_eq!(udp_header.get_length(), 14);
     });
-    assert_eq!(allocations, 0, "allocations detected");
+    assert_eq!(allocations.count_total, 0, "allocations detected");
 }
 
 //todo: test a packet with multiple IPv6 extensions
 
 #[test]
 fn test_tcp_options() {
-    let allocations = allocation_counter::count(|| {
+    let allocations = allocation_counter::measure(|| {
         let packet = &[
             0x40, 0x16, 0x7e, 0x22, 0xbc, 0xdf, 0xb4, 0xb0, 0x24, 0xf3, 0xf8, 0x10, 0x08, 0x00,
             0x45, 0x00, 0x00, 0x34, 0x04, 0xe5, 0x40, 0x00, 0x3a, 0x06, 0xb0, 0xfc, 0x68, 0x11,
@@ -233,5 +233,5 @@ fn test_tcp_options() {
             })
         );
     });
-    assert_eq!(allocations, 0, "allocations detected");
+    assert_eq!(allocations.count_total, 0, "allocations detected");
 }
